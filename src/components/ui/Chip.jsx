@@ -11,7 +11,7 @@ export default function Chip({ children, tone = 'dark' }) {
 
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-pill px-4 py-2 text-[13px] font-medium leading-none ${tones[tone]}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-pill px-4 py-2 text-[13px] font-mono leading-none ${tones[tone]}`}
     >
       {children}
     </span>

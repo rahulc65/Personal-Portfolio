@@ -1,13 +1,5 @@
 @import 'tailwindcss';
 
-/**
- * Design tokens.
- * Anything defined here under @theme becomes a Tailwind utility:
- *   --color-bg      -> bg-bg / text-bg / border-bg
- *   --font-display  -> font-display
- *   --radius-pill   -> rounded-pill
- * Change the palette or type scale in one place, here.
- */
 @theme {
   --color-bg: #eeece7;
   --color-bg-raised: #f6f5f1;
@@ -19,14 +11,17 @@
   --color-chip-ink: #f4f2ec;
 
   --font-display: 'Space Grotesk', Inter, -apple-system, sans-serif;
+  --font-mono: 'Manrope', -apple-system, sans-serif;
   --font-body: 'Inter', -apple-system, sans-serif;
 
   --radius-pill: 999px;
 }
 
 @layer base {
+  /* Lenis handles smooth scrolling, so native smooth scroll must be off
+     or the two fight each other. */
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
 
   body {
@@ -53,8 +48,409 @@
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Hero wordmark: one fluid size, so "Rahul©" always fits its row       */
+/* ------------------------------------------------------------------ */
+/* --hero-fs is the font size of the name. The name + © are ~2.74em wide, so:
+   - stacked layout (<=860px): the wordmark fills the row
+   - side-by-side layout: it takes whatever the "About me" block leaves, never more than 22vw
+   Fixed pixel sizes before this made it ~900px wide on every screen. */
+.hero {
+  --hero-pad: 40px; /* total left + right Container padding */
+  --hero-about-w: clamp(240px, 28vw, 420px);
+  --hero-fs: calc((100vw - var(--hero-pad)) / 2.84);
+}
+@media (min-width: 640px) {
+  .hero { --hero-pad: 64px; }
+}
+@media (min-width: 861px) {
+  .hero {
+    --hero-pad: 80px;
+    --hero-fs: min(22vw, calc((100vw - 140px - var(--hero-about-w)) / 2.84), 440px);
+  }
+}
+.hero__name-size { font-size: var(--hero-fs); }
+/* WebGL liquid title: while the canvas draws the heading, the DOM text is kept (SEO, selection,
+   screen readers) but made invisible so it doesn't double up */
+.hero-title.is-gl { color: transparent; }
+.hero__copy-size { font-size: calc(var(--hero-fs) * 0.531); }
+.hero__name-part {
+  margin-left: -0.0625em !important; /* was -20px at the old 320px size */
+}
+
 @layer utilities {
   .ease-brand {
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
+}
+
+/* Never let wide content (like the big Hero name) make the page scroll sideways or stretch
+   the phone's layout viewport. `clip`, unlike `hidden`, keeps position: sticky working. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* Lenis recommended styles */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/* Skills section                                                      */
+/* ------------------------------------------------------------------ */
+
+/* Background: dark ember at the left, orange glow in the middle, red at the
+   bottom, a pale sage highlight top-right, plus film grain on top. */
+.skills__bg {
+ background-color: #dc2c18;
+    background-image: linear-gradient(180deg, rgba(232, 69, 29, 0) 0%, rgba(232, 69, 29, 0) 44%, #e8451d 140%, #dc2c18 100%), linear-gradient(90deg, rgba(43, 27, 23, 0.55) 0%, rgba(43, 27, 23, 0) 55%), url(/src/assets/images/skills-bg.png);
+    background-size: cover, cover, cover;
+    background-position: center, center, center;
+    background-repeat: no-repeat;
+}
+.skills__bg::after,
+.marquee__bg::after,
+.services__bg::after,
+.footer__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.1 -0.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Scrollable list: thin scrollbar, soft fade at the bottom edge. */
+.skills__scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
+}
+/* global.css sets overscroll-behavior: contain for Lenis-prevented areas.
+   Here we want the page to keep scrolling once the list hits its end. */
+.lenis.lenis-smooth .skills__scroll[data-lenis-prevent] {
+  overscroll-behavior: auto;
+}
+
+.skills__row {
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.2));
+  background-size: 100% 1px;
+  background-position: bottom;
+  background-repeat: no-repeat;
+}
+
+.gravity__item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #1b1512;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  cursor: grab;
+  will-change: transform;
+}
+.gravity__item.is-dragging {
+  cursor: grabbing;
+  z-index: 5;
+}
+.gravity__item--pill {
+  height: clamp(44px, 5.1vw, 68px);
+  min-width: clamp(120px, 14.4vw, 190px);
+  padding: 0 clamp(22px, 3.1vw, 40px);
+  border-radius: 999px;
+  font-size: clamp(14px, 1.56vw, 20px);
+}
+.gravity__item--heart {
+  width: clamp(38px, 4.3vw, 58px);
+  height: clamp(38px, 4.3vw, 58px);
+  border-radius: 999px;
+  border: 1px solid #c1440e;
+}
+.gravity__heart {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #c1440e;
+  cursor: inherit;
+}
+.gravity__heart.is-liked svg {
+  animation: gravity-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes gravity-pop {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Process section                                                     */
+/* ------------------------------------------------------------------ */
+
+/* First line of the statement is indented, as in the design. */
+.process__statement {
+  text-indent: 24%;
+  text-wrap: pretty;
+}
+@media (max-width: 767px) {
+  .process__statement {
+    text-indent: 10%;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Marquee (scroller) section                                          */
+/* ------------------------------------------------------------------ */
+
+/* Same family as the Skills background, laid out horizontally:
+   maroon at the left, red, orange glow, a pale sage highlight and a dark
+   edge at the right, plus the same film grain. */
+.marquee__bg {
+  background:
+    radial-gradient(ellipse 22% 130% at 83% 0%, #cdc9aa 0%, rgba(205, 201, 170, 0.7) 40%, rgba(205, 201, 170, 0) 100%),
+    radial-gradient(ellipse 30% 110% at 58% 100%, #f58230 0%, rgba(245, 130, 48, 0) 100%),
+    radial-gradient(ellipse 14% 140% at 100% 25%, #2f2e2a 0%, rgba(47, 46, 42, 0) 100%),
+    radial-gradient(ellipse 22% 140% at 0% 40%, #5a0e08 0%, rgba(90, 14, 8, 0) 100%),
+    linear-gradient(90deg, #7a160b 0%, #e23a18 38%, #f0692a 68%, #d9602e 100%);
+}
+
+.marquee__text,
+.marquee__icon {
+  flex-shrink: 0;
+  padding-block: clamp(18px, 2.6vw, 36px);
+  padding-right: clamp(26px, 3.6vw, 56px);
+  color: #fff;
+  white-space: nowrap;
+}
+.marquee__text {
+  font-family: var(--font-mono);
+  font-size: clamp(32px, 5vw, 80px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+.marquee__icon {
+  display: flex;
+  align-items: center;
+}
+.marquee__icon svg {
+  width: clamp(28px, 4.5vw, 70px);
+  height: clamp(28px, 4.5vw, 70px);
+}
+
+/* ------------------------------------------------------------------ */
+/* Services section                                                    */
+/* ------------------------------------------------------------------ */
+
+/* Dark olive at the top with a pale sage glow, orange rising at the left,
+   red at the bottom, a dark edge on the right, plus the shared film grain. */
+.services__bg {
+    background-color: #dc2c18;
+    background-image: linear-gradient(180deg, rgba(232, 69, 29, 0) 0%, rgba(232, 69, 29, 0) 44%, #e8451d 140%, #dc2c18 100%), linear-gradient(90deg, rgba(43, 27, 23, 0.55) 0%, rgba(43, 27, 23, 0) 55%), url(/src/assets/images/services-bg.png);
+    background-size: cover, cover, cover;
+    background-position: center, center, center;
+    background-repeat: no-repeat;
+}
+
+/* ------------------------------------------------------------------ */
+/* Contact section (Tetris panel)                                      */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --tetris-orange: #e8460e;
+}
+
+/* Graph paper: one line per cell, so the grid and the blocks share exact edges.
+   The cell size is a whole number of pixels, set from JS. */
+.tetris-board {
+  --line: rgba(20, 18, 15, 0.075);
+  background-color: #fafaf8;
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: var(--cell) var(--cell);
+}
+
+
+.footer__bg {
+  background:
+    radial-gradient(ellipse 70% 35% at 50% 100%, rgba(255, 214, 120, 0.55) 0%, rgba(255, 214, 120, 0) 100%),
+    linear-gradient(180deg, #470200 0%, #5c0b03 17%, #a3250c 38%, #d03d15 55%, #ec6322 71%, #f78d3a 86%, #ffc261 100%);
+}
+
+/* Footer pills: translucent glass instead of solid white. Add to .gravity__item--pill. */
+.gravity--passthrough {
+  pointer-events: none; /* the layer covers the whole footer; only the pills take clicks */
+}
+.gravity--passthrough .gravity__item {
+  pointer-events: auto;
+}
+.gravity__item--glass {
+  height: clamp(40px, 4.5vw, 62px);
+  min-width: clamp(104px, 12.6vw, 170px);
+  padding: 0 clamp(18px, 2.4vw, 32px);
+  background: rgba(255, 255, 255, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  color: #fff;
+  font-size: clamp(13px, 1.3vw, 17px);
+  font-weight: 500;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+/* Contact form: keep autofilled fields transparent (Chrome paints its own background) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-ink); /* typed/autofilled text stays your ink colour */
+  caret-color: var(--color-ink);
+  /* Chrome won't let you override its background directly, so push the colour change out ~forever */
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+
+/* Firefox / standard syntax */
+input:autofill,
+textarea:autofill,
+select:autofill {
+  background-color: transparent !important;
+  color: var(--color-ink);
+}
+
+/* navbar badge: the number pops in when it changes (3 -> 0 and back) */
+@keyframes nav-count-pop {
+  from { transform: scale(0.35); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* navbar pills (Menu, About me, Resume, Contact, Download CV): one size scale, smaller on phones so the
+   expanded row (badge + 3 links) still fits at 320px. Plain media queries = a predictable cascade. */
+.nav-pill { padding: 10px 18px; font-size: 14px; line-height: 1.2; }
+@media (min-width: 640px) { .nav-pill { padding: 10px 22px; font-size: 15px; } }
+@media (max-width: 639px) { .nav-pill { padding: 8px 14px; font-size: 13px; } }
+@media (max-width: 380px) { .nav-pill { padding: 8px 12px; font-size: 12.5px; } }
+@media (max-width: 340px) { .nav-pill { padding: 8px 10px; font-size: 12px; } }
+/* Download CV is icon-only on phones */
+@media (max-width: 639px) { .nav-pill--icon { padding: 8px 12px; } }
+
+/* ------------------------------------------------------------------------------------------------
+   Navbars (two separate bars, see components/layout/Navbar.jsx)
+   .nav-panel  the plain full-width HERO bar at the top of the page (normal page flow)
+   .nav-card   the FLOATING card: margin from the edges, rounded, frosted background, soft shadow
+   ------------------------------------------------------------------------------------------------ */
+.nav-panel {
+  display: flex;
+  align-items: center;
+  padding: 22px 20px;
+  background: var(--color-bg);
+}
+@media (min-width: 640px) { .nav-panel { padding: 22px 32px; } }
+@media (min-width: 1024px) { .nav-panel { padding: 22px 40px; } }
+
+.nav-card {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(226, 224, 218, 0.84);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.3);
+  box-shadow:
+    0 12px 32px -10px rgba(20, 18, 15, 0.28),
+    0 2px 6px rgba(20, 18, 15, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+@media (min-width: 640px) { .nav-card { padding: 10px 18px; } }
+/* ---------------------------------------------------------------------------
+   Project cards: floating "View Project" pill (ProjectCard.jsx)
+   Hidden at rest; on hover it trails the cursor over the image. On touch
+   screens it is pinned to the top-right corner instead.
+   --------------------------------------------------------------------------- */
+@media (hover: hover) and (pointer: fine) {
+  .project-card__media { cursor: none; }
+}
+
+.project-card__cta {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 18px;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none; /* clicks fall through to the card link */
+  visibility: hidden; /* GSAP reveals it on hover */
+  box-shadow: 0 10px 28px -8px rgba(20, 18, 15, 0.45);
+  will-change: transform;
+}
+
+.project-card__cta-arrow {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* touch screens: no hover, so keep it visible in the corner */
+.project-card__cta[data-pinned='true'] {
+  left: auto;
+  top: 12px;
+  right: 12px;
+  visibility: visible;
+  font-size: 13px;
+  padding: 5px 5px 5px 14px;
+}
+.project-card__cta[data-pinned='true'] .project-card__cta-arrow {
+  width: 26px;
+  height: 26px;
+}
+
+/* keyboard users: show it centred while the card link has focus */
+a:focus-visible .project-card__cta:not([data-pinned='true']) {
+  left: 50%;
+  top: 50%;
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) !important;
 }
