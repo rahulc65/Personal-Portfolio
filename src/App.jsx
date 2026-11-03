@@ -1,4 +1,6 @@
 import Navbar from './components/layout/Navbar';
+import Preloader from './components/layout/Preloader';
+import ScrollProgress from './components/layout/ScrollProgress';
 import Hero from './components/sections/Hero/Hero';
 import Projects from './components/sections/Projects/Projects';
 import Skills from './components/sections/Skills/Skills';
@@ -75,6 +77,8 @@ export default function App() {
 
   return (
     <>
+      <Preloader />
+      <ScrollProgress />
       <Navbar notificationCount={3} cvHref="/rahul-cv.pdf" />
       <main>
         {sections.map(({ id, Component, props }) => (

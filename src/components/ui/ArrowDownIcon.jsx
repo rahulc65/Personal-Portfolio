@@ -1,11 +1,5 @@
 import arrowDown from '../../assets/icons/arrow-down.svg';
 
-/**
- * ArrowDownIcon
- * The down arrow as an SVG (src/assets/icons/arrow-down.svg), drawn as a colour-mask so it always takes
- * the colour of the surrounding text. To use a different arrow, just replace that SVG file (any colours,
- * only its shape is used).
- */
 export default function ArrowDownIcon({ className = '' }) {
   return (
     <span
