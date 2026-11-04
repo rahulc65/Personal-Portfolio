@@ -1,11 +1,37 @@
+import { useEffect, useRef } from 'react';
+import { gsap, prefersReducedMotion } from '../../../lib/gsap';
+
 
 export default function ProcessItem({ step, open, onToggle }) {
   const { id, number, title, description, tags = [] } = step;
   const headerId = `process-${id}-header`;
   const panelId = `process-${id}-panel`;
+  const bodyRef = useRef(null);
+  const wasOpen = useRef(open);
+
+  // opening a step: the text and then the tags fade up while the panel grows
+  useEffect(() => {
+    const opened = open && !wasOpen.current;
+    wasOpen.current = open;
+    if (!opened || prefersReducedMotion() || !bodyRef.current) return undefined;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '.process__desc',
+        { autoAlpha: 0, y: 18 },
+        { autoAlpha: 1, y: 0, duration: 0.9, ease: 'expo.out', delay: 0.12 }
+      );
+      gsap.fromTo(
+        '.process__tag',
+        { autoAlpha: 0, y: 14, scale: 0.9 },
+        { autoAlpha: 1, y: 0, scale: 1, duration: 0.8, ease: 'expo.out', stagger: 0.05, delay: 0.25 }
+      );
+    }, bodyRef);
+    return () => ctx.revert();
+  }, [open]);
 
   return (
-    <div className="border-b border-ink/25">
+    <div className="process__row border-b border-ink/25">
       <h3 className="m-0">
         <button
           type="button"
@@ -42,8 +68,8 @@ export default function ProcessItem({ step, open, onToggle }) {
         }`}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="border-ink/25 pb-[clamp(16px,2vw,24px)]">
-            <p className="m-0 max-w-[80ch] font-mono text-[clamp(12px,1vw,15px)] leading-[1.55] text-ink">
+          <div ref={bodyRef} className="border-ink/25 pb-[clamp(16px,2vw,24px)]">
+            <p className="process__desc m-0 max-w-[80ch] font-mono text-[clamp(12px,1vw,15px)] leading-[1.55] text-ink">
               {description}
             </p>
             {tags.length > 0 && (
@@ -51,7 +77,7 @@ export default function ProcessItem({ step, open, onToggle }) {
                 {tags.map((tag, i) => (
                   <li
                     key={`${tag}-${i}`}
-                    className="rounded-pill border border-ink px-3.5 py-[5px] font-mono text-[clamp(11px,0.9vw,12.5px)] font-medium leading-none text-ink"
+                    className="process__tag rounded-pill border border-ink px-3.5 py-[5px] font-mono text-[clamp(11px,0.9vw,12.5px)] font-medium leading-none text-ink"
                   >
                     {tag}
                   </li>

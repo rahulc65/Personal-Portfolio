@@ -1,19 +1,107 @@
+import { useLayoutEffect, useRef } from 'react';
+import { gsap, ScrollTrigger, SplitText, prefersReducedMotion } from '../../../lib/gsap';
 import ServiceThumb from './ServiceThumb';
 
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
+/**
+ * ServiceRow
+ * The open / close of the panel is still the CSS animation below. GSAP adds the polish:
+ *  - the row's divider line is a real element: it draws from left to right (entrance, driven by Services),
+ *    and a bright line draws over it on hover (and stays drawn while the row is open)
+ *  - when a row opens: the whole picture card swipes down into place while the photo settles
+ *    from a zoom, the heading rises line by line, the text fades up and the category chips pop in one by one
+ *  - the row that is open on page load plays this when it scrolls into view
+ */
 export default function ServiceRow({ service, index, open, onToggle }) {
   const { id, title, description, tags = [], more, image } = service;
   const number = `(${String(index + 1).padStart(3, '0')})`;
   const panelId = `service-${id}-panel`;
+  const rowRef = useRef(null);
+  const prevOpen = useRef(null);
+
+  useLayoutEffect(() => {
+    if (prefersReducedMotion()) return undefined;
+    const root = rowRef.current;
+    const changed = prevOpen.current !== null && prevOpen.current !== open; // user toggled (not the first render)
+    prevOpen.current = open;
+
+    let split = null;
+
+    const ctx = gsap.context(() => {
+      const thumb = root.querySelector('.service__thumb');
+      const img = root.querySelector('.service__thumb img');
+      const heading = root.querySelector('.service__title');
+      const desc = root.querySelector('.service__desc');
+      const catTitle = root.querySelector('.service__cat');
+      const tagEls = gsap.utils.toArray(root.querySelectorAll('.service__tag'));
+
+      // everything starts "not shown yet"
+      const hide = () => {
+        gsap.set(thumb, { clipPath: 'inset(0% 0% 100% 0%)', yPercent: -30 });
+        if (img) gsap.set(img, { scale: 1.3 });
+        gsap.set(heading, { autoAlpha: 0 });
+        gsap.set([desc, catTitle], { autoAlpha: 0, y: 16 });
+        gsap.set(tagEls, { autoAlpha: 0, y: 14, scale: 0.85 });
+      };
+
+      const show = () => {
+        hide();
+        const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
+
+        // picture card: the whole container swipes down into place (wiped open from its top edge while it slides
+        // down), and the photo inside settles from a zoom
+        tl.to(
+          thumb,
+          { clipPath: 'inset(0% 0% 0% 0%)', yPercent: 0, duration: 1.3, ease: 'expo.inOut', clearProps: 'clipPath,transform' },
+          0
+        );
+        if (img) tl.to(img, { scale: 1, duration: 1.9, clearProps: 'transform' }, 0);
+
+        // heading: lines rise out of a mask
+        split = SplitText.create(heading, { type: 'lines', mask: 'lines' });
+        gsap.set(split.lines, { yPercent: 115 });
+        gsap.set(heading, { autoAlpha: 1 });
+        tl.to(split.lines, { yPercent: 0, duration: 1.1, stagger: 0.08, onComplete: () => split?.revert() }, 0.2);
+
+        tl.to(desc, { autoAlpha: 1, y: 0, duration: 1 }, 0.4)
+          .to(catTitle, { autoAlpha: 1, y: 0, duration: 1 }, 0.5)
+          .to(tagEls, { autoAlpha: 1, y: 0, scale: 1, duration: 0.9, ease: 'back.out(1.6)', stagger: 0.05 }, 0.6);
+      };
+
+      if (!open) {
+        // closing (or closed on load): reset once the panel has finished folding away
+        gsap.delayedCall(changed ? 0.7 : 0, hide);
+      } else if (changed) {
+        hide();
+        gsap.delayedCall(0.25, () => ctx.add(show)); // let the panel start growing first
+      } else {
+        // open on page load: wait until the row scrolls into view
+        hide();
+        ScrollTrigger.create({
+          trigger: root,
+          start: 'top 88%',
+          end: 'max',
+          once: true,
+          onEnter: () => ctx.add(show),
+        });
+      }
+    }, rowRef);
+
+    return () => {
+      split?.revert();
+      ctx.revert();
+    };
+  }, [open]);
 
   return (
     <div
-      className={`relative border-b border-white/35 transition-colors duration-500 [--pad:clamp(18px,2vw,26px)] ${
+      ref={rowRef}
+      className={`group/row relative transition-colors duration-500 [--pad:clamp(18px,2vw,26px)] ${
         open ? '' : 'hover:bg-white/[0.03]'
       }`}
     >
-      <div className="grid grid-cols-[52px_minmax(0,1fr)_34px] items-start sm:grid-cols-[clamp(64px,16%,360px)_minmax(0,1fr)_34px] py-[var(--pad)] md:grid-cols-[minmax(110px,24%)_minmax(0,1fr)_44px]">
+      <div className="service__inner grid grid-cols-[52px_minmax(0,1fr)_34px] items-start sm:grid-cols-[clamp(64px,16%,360px)_minmax(0,1fr)_34px] py-[var(--pad)] md:grid-cols-[minmax(110px,24%)_minmax(0,1fr)_44px]">
         {/* number */}
         <span className="flex h-[34px] items-center font-mono text-[clamp(15px,1.45vw,19px)] font-bold text-white/60">
           {number}
@@ -55,30 +143,30 @@ export default function ServiceRow({ service, index, open, onToggle }) {
                   transition: `opacity 450ms ease ${open ? '200ms' : '0ms'}, transform 650ms ${EASE} ${open ? '120ms' : '0ms'}`,
                 }}
               >
-                <ServiceThumb src={image} alt={image ? title : ''} className="max-w-[240px] md:max-w-none" />
+                <ServiceThumb src={image} alt={image ? title : ''} className="service__thumb max-w-[240px] md:max-w-none" />
 
                 <div>
-                  <h3 className="m-0 max-w-[16ch] font-mono text-[clamp(18px,1.95vw,28px)] font-bold leading-[1.1] tracking-[-0.01em] text-white">
+                  <h3 className="service__title m-0 max-w-[16ch] font-mono text-[clamp(18px,1.95vw,28px)] font-bold leading-[1.1] tracking-[-0.01em] text-white">
                     {title}
                   </h3>
-                  <p className="m-0 mt-[clamp(10px,1.2vw,16px)] max-w-[34ch] font-mono text-[clamp(11px,0.95vw,13px)] leading-[1.5] text-white">
+                  <p className="service__desc m-0 mt-[clamp(10px,1.2vw,16px)] max-w-[34ch] font-mono text-[clamp(11px,0.95vw,13px)] leading-[1.5] text-white">
                     {description}
                   </p>
                 </div>
 
                 <div>
-                  <p className="m-0 font-mono text-[14px] text-white">Categories</p>
+                  <p className="service__cat m-0 font-mono text-[14px] text-white">Categories</p>
                   <ul className="m-0 mt-3 flex max-w-[28ch] list-none flex-wrap gap-y-[7px] gap-x-[6px] p-0 md:max-w-[34ch]">
                     {tags.map((tag) => (
                       <li
                         key={tag}
-                        className="rounded-pill bg-white px-3 py-[4px] font-mono text-[11px] font-semibold leading-[1.3] text-accent"
+                        className="service__tag rounded-pill bg-white px-3 py-[4px] font-mono text-[11px] font-semibold leading-[1.3] text-accent"
                       >
                         {tag}
                       </li>
                     ))}
                     {more && (
-                      <li className="grid px-2 py-[4px] place-items-center rounded-pill bg-white font-mono text-[11px] font-bold text-accent">
+                      <li className="service__tag grid px-2 py-[4px] place-items-center rounded-pill bg-white font-mono text-[11px] font-bold text-accent">
                         {more}
                       </li>
                     )}
@@ -110,6 +198,19 @@ export default function ServiceRow({ service, index, open, onToggle }) {
           </span>
         </button>
       </div>
+
+      {/* divider line: draws in on entrance (Services), bright line draws over it on hover / while open */}
+      <span
+        aria-hidden="true"
+        className="service__line pointer-events-none absolute bottom-0 left-0 h-px w-full bg-white/35"
+        style={{ transformOrigin: '0% 50%' }}
+      />
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute bottom-0 left-0 h-px w-full origin-left bg-white transition-[scale] duration-[900ms] ease-brand ${
+          open ? 'scale-x-100' : 'scale-x-0 group-hover/row:scale-x-100'
+        }`}
+      />
     </div>
   );
 }

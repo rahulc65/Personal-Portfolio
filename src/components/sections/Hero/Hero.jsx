@@ -8,22 +8,8 @@ import HeroImage from './HeroImage';
 import ArrowDownIcon from '../../ui/ArrowDownIcon';
 import profileImg from '../../../assets/images/profile-img.png';
 
-// hovering a CTA fills it black (and the text turns light)
 const HOVER_BLACK = 'hover:bg-ink hover:border-ink hover:text-bg-raised';
 
-/**
- * Hero
- * Landing section: oversized name, about blurb and primary CTAs over a full-bleed portrait.
- *
- * Motion (all GSAP):
- *  - waits for the Preloader curtain, then plays one master timeline
- *  - name rises out of its mask with a slight tilt, the © spins in
- *  - bio is split into lines, each line slides up out of its own mask (SplitText)
- *  - CTAs rise in; on hover they fill black
- *  - the portrait is revealed with a clip-path wipe while the photo settles from a zoom
- *
- * The WebGL liquid title / image hover (titleReady / introDone) works exactly as before.
- */
 export default function Hero({
   name = 'Rahul',
   role = 'Creative Developer',
@@ -34,13 +20,13 @@ export default function Hero({
 }) {
   const rootRef = useRef(null);
   const bioRef = useRef(null);
-  // true once the title's intro animation is done: the WebGL liquid effect takes over from the DOM text
+
   const [titleReady, setTitleReady] = useState(false);
-  // true once the whole intro is done: the portrait's hover distortion is switched on
+
   const [introDone, setIntroDone] = useState(false);
 
   useLayoutEffect(() => {
-    // reduced motion: everything just shows as-is (the WebGL title / image effects check this themselves)
+
     if (prefersReducedMotion()) return undefined;
 
     let stopWaiting = () => {};
@@ -80,16 +66,13 @@ export default function Hero({
         .from('.hero__mark', { scale: 0, rotate: -220, duration: 1.3, ease: 'back.out(1.5)' }, 0.55)
         .call(() => setTitleReady(true), null, 1.9)
         .from('.hero__eyebrow', { autoAlpha: 0, y: 14, duration: 1 }, 0.55)
-        .to(
-          () => split.lines,
-          {
-            yPercent: 0,
-            duration: 1.3,
-            stagger: 0.09,
-            onStart: () => {
-              revealed = true;
-            },
+        // bio lines: created when this point of the timeline is reached (the split lines can be re-made on resize)
+        .call(
+          () => {
+            revealed = true;
+            ctx.add(() => gsap.to(split.lines, { yPercent: 0, duration: 1.3, stagger: 0.09, ease: 'expo.out' }));
           },
+          null,
           0.65
         )
         .from('.hero__btn', { autoAlpha: 0, y: 36, duration: 1.1, stagger: 0.1 }, 0.85)

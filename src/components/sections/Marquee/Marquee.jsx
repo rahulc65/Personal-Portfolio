@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { gsap, ScrollTrigger, prefersReducedMotion } from '../../../lib/gsap';
 import useScrollMarquee from '../../../hooks/useScrollMarquee';
 
 const ICON_PROPS = {
@@ -43,6 +44,10 @@ const ICONS = {
  * as needed to cover the screen, and the hook (useScrollMarquee) slides them
  * and wraps by one copy's width, so the loop never shows a seam.
  * Scroll down: faster, right to left. Scroll up: faster, left to right.
+ *
+ * GSAP layer (the sliding itself stays in the hook, which owns the track's transform):
+ *  - the band is wiped open from left to right, and its words / icons rise in one by one
+ *  - while you scroll, the whole band leans (skew) with the scroll speed and eases back when you stop
  */
 export default function Marquee({ items = [] }) {
   const sectionRef = useRef(null);
@@ -68,6 +73,49 @@ export default function Marquee({ items = [] }) {
 
   useScrollMarquee({ sectionRef, trackRef, periodRef, deps: copies });
 
+  /* ---------- GSAP: entrance + scroll skew ---------- */
+  useLayoutEffect(() => {
+    if (prefersReducedMotion()) return undefined;
+    const section = sectionRef.current;
+    let onScrollEnd = null;
+
+    const ctx = gsap.context(() => {
+      const skewEl = section.querySelector('.marquee__skew');
+      const items = gsap.utils.toArray(section.querySelectorAll('.marquee__text, .marquee__icon'));
+
+      // entrance
+      gsap.set(section, { clipPath: 'inset(0% 100% 0% 0%)' });
+      gsap.set(items, { yPercent: 115 });
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top 92%',
+        end: 'max', // still plays if the page was opened already scrolled past the band
+        once: true,
+        onEnter: () =>
+          ctx.add(() => {
+            gsap.to(section, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.4, ease: 'expo.inOut', clearProps: 'clipPath' });
+            gsap.to(items, { yPercent: 0, duration: 1.2, ease: 'expo.out', stagger: { each: 0.06 }, delay: 0.35 });
+          }),
+      });
+
+      // scroll skew: lean with the scroll velocity, ease back to flat when scrolling stops
+      const skewTo = gsap.quickTo(skewEl, 'skewX', { duration: 0.6, ease: 'power3' });
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top bottom',
+        end: 'bottom top',
+        onUpdate: (self) => skewTo(gsap.utils.clamp(-7, 7, self.getVelocity() / -350)),
+      });
+      onScrollEnd = () => skewTo(0);
+      ScrollTrigger.addEventListener('scrollEnd', onScrollEnd);
+    }, sectionRef);
+
+    return () => {
+      if (onScrollEnd) ScrollTrigger.removeEventListener('scrollEnd', onScrollEnd);
+      ctx.revert();
+    };
+  }, []);
+
   const label = items
     .filter((item) => item.type === 'text')
     .map((item) => item.value)
@@ -78,6 +126,8 @@ export default function Marquee({ items = [] }) {
       <div className="marquee__bg absolute inset-0" aria-hidden="true" />
       <p className="sr-only">{label}</p>
 
+      {/* the wrapper is what leans with the scroll speed; the track inside is moved by useScrollMarquee */}
+      <div className="marquee__skew relative z-10">
       <div ref={trackRef} aria-hidden="true" className="relative z-10 flex w-max will-change-transform">
         {Array.from({ length: copies }, (_, c) => (
           <div key={c} ref={c === 0 ? periodRef : undefined} className="flex shrink-0 items-center">
@@ -94,6 +144,7 @@ export default function Marquee({ items = [] }) {
             )}
           </div>
         ))}
+      </div>
       </div>
     </section>
   );

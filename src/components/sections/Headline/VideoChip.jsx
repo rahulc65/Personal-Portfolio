@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
+import { useEffect, useLayoutEffect, useRef } from 'react';
+import { gsap, ScrollTrigger, prefersReducedMotion } from '../../../lib/gsap';
 
 /**
  * VideoChip
@@ -10,10 +10,30 @@ import gsap from 'gsap';
  * Sizes are in em, so the card scales with the headline's font size.
  * The video only plays while on screen and stays paused for people who
  * prefer reduced motion.
+ *
+ * Entrance (GSAP): the card is hidden (scale 0) until it scrolls into view, then it pops in with an elastic spring.
  */
 export default function VideoChip({ mp4, webm, width = 1.5, height = 1, rotate = 0 }) {
   const cardRef = useRef(null);
   const videoRef = useRef(null);
+
+  // entrance: pop in the first time the card scrolls into view
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (!card || prefersReducedMotion()) return undefined;
+
+    const ctx = gsap.context(() => {
+      gsap.set(card, { scale: 0 });
+      ScrollTrigger.create({
+        trigger: card,
+        start: 'top 88%',
+        end: 'max', // still plays if the page was opened already scrolled past the card
+        once: true,
+        onEnter: () => ctx.add(() => gsap.to(card, { scale: 1, duration: 1.5, ease: 'elastic.out(1, 0.55)', delay: 0.35 })),
+      });
+    });
+    return () => ctx.revert();
+  }, []);
 
   useEffect(() => {
     const card = cardRef.current;
@@ -23,7 +43,8 @@ export default function VideoChip({ mp4, webm, width = 1.5, height = 1, rotate =
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     /* ---- elastic hover ---- */
-    gsap.set(card, { rotation: rotate, scale: 1, transformOrigin: '50% 50%' });
+    // (scale is left alone here: the entrance above owns it until the card has popped in)
+    gsap.set(card, { rotation: rotate, transformOrigin: '50% 50%' });
 
     const enter = () => {
       gsap.set(card, { zIndex: 10 });

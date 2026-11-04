@@ -3,12 +3,11 @@ import gsap from 'gsap';
 import Chip from '../../ui/Chip';
 import PillButton from '../../ui/PillButton';
 
-// the liquid effect is tuned a little differently for the smaller cards than for the hero portrait
 const CARD_FLOW = { falloff: 0.7, distort: 1.7, split: 1.0, shimmer: 0.22 };
 
-// the floating "View Project" pill
-const FOLLOW_SECONDS = 0.45; // how softly the pill trails the cursor (higher = lazier)
-const EDGE_GAP = 12; // keep the pill this far (px) inside the image edges
+const FOLLOW_SECONDS = 0.45; 
+
+const EDGE_GAP = 12;
 
 function ArrowIcon() {
   return (
@@ -27,7 +26,6 @@ export default function ProjectCard({ project, view = 'grid' }) {
   const btnRef = useRef(null);
   const hasLink = Boolean(url);
 
-  // hover: liquid distortion + RGB split on the mockup (replaces the old zoom-in)
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     let cancelled = false;
@@ -38,7 +36,7 @@ export default function ProjectCard({ project, view = 'grid' }) {
         detach = attachFlowmapImage(hostRef.current, imgRef.current, CARD_FLOW);
       });
     };
-    // load the effect when the browser is idle, so it never competes with the first paint
+
     const idle = window.requestIdleCallback ? window.requestIdleCallback(start, { timeout: 4000 }) : setTimeout(start, 1500);
     return () => {
       cancelled = true;
@@ -46,11 +44,9 @@ export default function ProjectCard({ project, view = 'grid' }) {
       else clearTimeout(idle);
       detach?.();
     };
-    // switching grid/list remounts the image box, so re-attach to the new one
+
   }, [view]);
 
-  // floating "View Project" pill: hidden at rest, appears on hover and trails the cursor.
-  // Touch screens (no hover) get it pinned in the top-right corner instead, always visible.
   useEffect(() => {
     const host = hostRef.current;
     const btn = btnRef.current;
@@ -67,7 +63,6 @@ export default function ProjectCard({ project, view = 'grid' }) {
     const xTo = gsap.quickTo(btn, 'x', { duration: reduced ? 0.01 : FOLLOW_SECONDS, ease: 'power3' });
     const yTo = gsap.quickTo(btn, 'y', { duration: reduced ? 0.01 : FOLLOW_SECONDS, ease: 'power3' });
 
-    // cursor position inside the image, clamped so the whole pill stays inside the card
     const target = (e) => {
       const r = host.getBoundingClientRect();
       const hw = btn.offsetWidth / 2 + EDGE_GAP;
@@ -80,7 +75,7 @@ export default function ProjectCard({ project, view = 'grid' }) {
 
     const onEnter = (e) => {
       const { x, y } = target(e);
-      gsap.set(btn, { x, y }); // start right under the cursor, no fly-in from a corner
+      gsap.set(btn, { x, y }); 
       xTo(x, x);
       yTo(y, y);
       gsap.to(btn, { scale: 1, autoAlpha: 1, duration: 0.35, ease: 'back.out(1.7)', overwrite: 'auto' });
@@ -105,7 +100,6 @@ export default function ProjectCard({ project, view = 'grid' }) {
     };
   }, [hasLink, view]);
 
-  // the whole card is the link when a url is set; without one it renders exactly as before
   const Wrapper = hasLink ? 'a' : 'div';
   const linkProps = hasLink
     ? {
@@ -119,6 +113,7 @@ export default function ProjectCard({ project, view = 'grid' }) {
   const media = (
     <div
       ref={hostRef}
+      data-reveal="media"
       className={`relative aspect-[16/10] w-full overflow-hidden rounded-[6px] bg-[#0c0c0c] ${
         hasLink ? 'project-card__media' : ''
       }`}
@@ -126,7 +121,6 @@ export default function ProjectCard({ project, view = 'grid' }) {
       <img ref={imgRef} src={image} alt={title} loading="lazy" className="h-full w-full object-cover" />
 
       {hasLink && (
-        // decorative: the card link itself is what gets clicked, so the pill ignores the pointer
         <span ref={btnRef} aria-hidden="true" className="project-card__cta">
           View Project
           <span className="project-card__cta-arrow">
@@ -146,7 +140,6 @@ export default function ProjectCard({ project, view = 'grid' }) {
   );
   const statusChip = status && <Chip tone={status.tone === 'accent' ? 'accent' : 'dark'}>{status.label}</Chip>;
 
-  // ---------- list view: text on the left, image on the right, divider lines between rows ----------
   if (isList) {
     return (
       <article className="project-card group border-b border-line first:border-t">
@@ -155,26 +148,25 @@ export default function ProjectCard({ project, view = 'grid' }) {
           className="grid grid-cols-1 items-top gap-7 py-[clamp(28px,4vw,48px)] text-inherit no-underline outline-offset-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-[clamp(32px,5vw,80px)]"
         >
           <div className="order-2 flex flex-col items-start md:order-1">
-            <h3 className="m-0 font-mono text-[clamp(28px,3.4vw,46px)] font-bold uppercase leading-[1.05] tracking-[-0.02em]">
+            <h3 data-reveal="title" className="m-0 font-mono text-[clamp(28px,3.4vw,46px)] font-bold uppercase leading-[1.05] tracking-[-0.02em]">
               {title}
             </h3>
-
-            <div className="mt-4 flex flex-wrap gap-2">
+            
+            <div data-reveal="meta" className="mt-4 flex flex-wrap gap-2">
               {chips}
               {statusChip}
             </div>
 
             {description && (
-              <p className="m-0 mt-5 max-w-[520px] text-[clamp(15px,1.2vw,17px)] leading-[1.6] text-ink-soft">
+              <p data-reveal="meta" className="m-0 mt-5 max-w-[520px] text-[clamp(15px,1.2vw,17px)] leading-[1.6] text-ink-soft">
                 {description}
               </p>
             )}
 
             {hasLink && (
-              // a span, not a link: the whole row is already the link
-              <PillButton as="span" className="mt-7">
-                Visit Project
-              </PillButton>
+              <div data-reveal="meta" className="mt-7">
+                <PillButton as="span">Visit Project</PillButton>
+              </div>
             )}
           </div>
 
@@ -184,18 +176,17 @@ export default function ProjectCard({ project, view = 'grid' }) {
     );
   }
 
-  // ---------- grid view ----------
   return (
     <article className="project-card group flex flex-col">
       <Wrapper {...linkProps} className="flex flex-col text-inherit no-underline outline-offset-4">
         {media}
 
-        <div className="mt-[18px] flex flex-wrap items-center justify-between gap-3">
+        <div data-reveal="meta" className="mt-[18px] flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">{chips}</div>
           {statusChip}
         </div>
 
-        <h3 className="mt-3.5 font-mono text-2xl font-bold uppercase tracking-[-0.015em] sm:text-[34px]">
+        <h3 data-reveal="title" className="mt-3.5 font-mono text-2xl font-bold uppercase tracking-[-0.015em] sm:text-[34px]">
           {title}
         </h3>
       </Wrapper>

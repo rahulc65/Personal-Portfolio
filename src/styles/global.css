@@ -72,7 +72,12 @@
 .hero__name-size { font-size: var(--hero-fs); }
 /* WebGL liquid title: while the canvas draws the heading, the DOM text is kept (SEO, selection,
    screen readers) but made invisible so it doesn't double up */
-.hero-title.is-gl { color: transparent; }
+/* The DOM text stays visible until the canvas has finished fading in (fadeInMs in FlowmapTitle.js is 220ms),
+   then it goes transparent. Without the delay the title dips for a moment = looks like it loads twice. */
+.hero-title.is-gl {
+  color: transparent;
+  transition: color 0s linear 300ms;
+}
 .hero__copy-size { font-size: calc(var(--hero-fs) * 0.531); }
 .hero__name-part {
   margin-left: -0.0625em !important; /* was -20px at the old 320px size */
