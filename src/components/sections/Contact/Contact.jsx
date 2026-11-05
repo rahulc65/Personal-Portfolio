@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { gsap, ScrollTrigger, prefersReducedMotion } from '../../../lib/gsap';
 import Container from '../../ui/Container';
 import TetrisPanel from './TetrisPanel';
 import ContactForm from './ContactForm';
@@ -7,17 +8,7 @@ import { FRAME_BORDER, PANEL_PAD, layoutWord } from './tetrisLayout';
 const GAP = 40; // px between the panel and the form on wide screens
 const PANEL_SHARE = 0.62; // how much of the row the panel may take on wide screens
 
-/**
- * Contact
- * Left: the Tetris-style panel. Right: the contact form.
- * The panel is sized in whole pixels per cell, so this component measures the row
- * and picks the biggest cell that fits; the panel then takes exactly the width it
- * needs and the form gets the rest.
- *
- * It also owns the game mode:
- *   idle -> entering (Play clicked) -> game -> exiting (Exit clicked) -> idle
- * TetrisPanel does the animating and tells us when each transition has finished.
- */
+
 export default function Contact({ word, serviceOptions = [], config }) {
   const rowRef = useRef(null);
   const formRef = useRef(null);
@@ -43,6 +34,47 @@ export default function Contact({ word, serviceOptions = [], config }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, [cols]);
+
+  /* ---------- entrance motion ---------- */
+  // wait until the cell size is known: before that TetrisPanel renders a placeholder box, not the real panel
+  const ready = cell > 0;
+  useLayoutEffect(() => {
+    if (!ready || prefersReducedMotion()) return undefined;
+    const panel = rowRef.current?.firstElementChild;
+    const form = formRef.current;
+    if (!panel || !form) return undefined;
+    // every direct child of the <form> except the hidden honeypot field
+    const fields = gsap.utils.toArray(form.querySelectorAll('form > *:not([aria-hidden="true"])'));
+
+    const ctx = gsap.context(() => {
+      gsap.set(panel, { clipPath: 'inset(0% 0% 100% 0%)' });
+      gsap.set(fields, { autoAlpha: 0, y: 34 });
+
+      ScrollTrigger.create({
+        trigger: panel,
+        start: 'top 90%',
+        end: 'max', // still plays if the page was opened already scrolled past this section
+        once: true,
+        onEnter: () =>
+          ctx.add(() =>
+            gsap.to(panel, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.3, ease: 'expo.out', clearProps: 'clipPath' })
+          ),
+      });
+
+      ScrollTrigger.create({
+        trigger: form,
+        start: 'top 88%',
+        end: 'max',
+        once: true,
+        onEnter: () =>
+          ctx.add(() =>
+            gsap.to(fields, { autoAlpha: 1, y: 0, duration: 1.1, ease: 'expo.out', stagger: 0.12, clearProps: 'transform' })
+          ),
+      });
+    }, rowRef);
+
+    return () => ctx.revert();
+  }, [ready]);
 
   return (
     <section id="contact" className="pt-[clamp(48px,5vw,40px)] pb-[clamp(48px,6vw,60px)]">
