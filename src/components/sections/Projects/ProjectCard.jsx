@@ -138,7 +138,12 @@ export default function ProjectCard({ project, view = 'grid' }) {
       ))}
     </>
   );
-  const statusChip = status && <Chip tone={status.tone === 'accent' ? 'accent' : 'dark'}>{status.label}</Chip>;
+  // phones: every status chip is orange, so it stands out from the (dark) tech-stack chips
+  const statusChip = status && (
+    <Chip tone={status.tone === 'accent' ? 'accent' : 'dark'} className="max-sm:bg-accent">
+      {status.label}
+    </Chip>
+  );
 
   if (isList) {
     return (

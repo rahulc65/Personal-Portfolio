@@ -459,3 +459,13 @@ a:focus-visible .project-card__cta:not([data-pinned='true']) {
   opacity: 1 !important;
   transform: translate(-50%, -50%) !important;
 }
+
+/* phones: no floating "View Project" pill on the project images (the whole card is still a link) */
+@media (max-width: 639px) {
+  .project-card__cta {
+    display: none !important;
+  }
+  .project-card__media {
+    cursor: auto;
+  }
+}

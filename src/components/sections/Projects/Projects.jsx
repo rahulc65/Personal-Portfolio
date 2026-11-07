@@ -10,7 +10,10 @@ export default function Projects({
   intro = "A collection of ideas, experiments, and creations brought to life through design and code. Here's a little glimpse into what I create.",
   viewprojectCta = { label: 'View all projects', href: '/projects' }
 }) {
-  const [view, setView] = useState('grid');
+  // phones open in list view (one big card per row reads better), larger screens in grid view
+  const [view, setView] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches ? 'list' : 'grid'
+  );
   const rootRef = useRef(null);
   const switching = useRef(false);
   const firstRun = useRef(true);
