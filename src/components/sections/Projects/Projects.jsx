@@ -203,7 +203,7 @@ export default function Projects({
           </div>
         </div>
 
-        <p className="projects__intro m-0 w-[48%] text-[clamp(20px,2.4vw,28px)] leading-[1.35] tracking-[-0.01em]">
+        <p className="projects__intro m-0 sm:w-[100%] lg:w-[48%] text-[clamp(20px,2.4vw,28px)] leading-[1.35] tracking-[-0.01em]">
           {intro}
         </p>
       </Container>
