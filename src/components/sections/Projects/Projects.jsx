@@ -19,7 +19,7 @@ export default function Projects({
     if (prefersReducedMotion()) return undefined;
     let split = null;
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       gsap.from('.projects__eyebrow, .projects__toggle', {
         autoAlpha: 0,
         y: 24,
@@ -60,15 +60,26 @@ export default function Projects({
   }, []);
 
   useLayoutEffect(() => {
-    const grid = rootRef.current.querySelector('.projects__grid');
-    gsap.set(grid, { autoAlpha: 1, y: 0 }); // undo the fade-down of a layout switch
+    const root = rootRef.current;
+    if (!root) return undefined;
+    const grid = root.querySelector('.projects__grid');
+    if (grid) gsap.set(grid, { autoAlpha: 1, y: 0 }); // undo the fade-down of a layout switch
     switching.current = false;
 
     if (prefersReducedMotion()) return undefined;
 
     const splits = [];
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
+      // make a card fully visible again (used if its reveal animation ever fails)
+      const showNow = (card) => {
+        card.querySelectorAll('[data-reveal]').forEach((el) => {
+          gsap.set(el, { clearProps: 'clipPath,opacity,visibility,transform,y' });
+        });
+        const img = card.querySelector('[data-reveal="media"] img');
+        if (img) gsap.set(img, { clearProps: 'transform' });
+      };
+
       const play = (card) => {
         const media = card.querySelector('[data-reveal="media"]');
         const img = media?.querySelector('img');
@@ -110,7 +121,16 @@ export default function Projects({
           start: 'top 88%',
           end: 'max', 
           once: true,
-          onEnter: () => ctx.add(() => play(card)),
+          onEnter: () =>
+            gctx.add(() => {
+              // GSAP leaves its global context stuck if a callback throws, so never let one escape.
+              try {
+                play(card);
+              } catch (err) {
+                console.error('Project reveal failed:', err);
+                showNow(card);
+              }
+            }),
         });
       });
     }, rootRef);
@@ -130,8 +150,13 @@ export default function Projects({
       setView(next);
       return;
     }
+    const gridEl = rootRef.current?.querySelector('.projects__grid');
+    if (!gridEl) {
+      setView(next);
+      return;
+    }
     switching.current = true;
-    gsap.to(rootRef.current.querySelector('.projects__grid'), {
+    gsap.to(gridEl, {
       autoAlpha: 0,
       y: 24,
       duration: 0.35,
@@ -178,7 +203,7 @@ export default function Projects({
           </div>
         </div>
 
-        <p className="projects__intro m-0 max-w-[700px] text-[clamp(20px,2.4vw,28px)] leading-[1.35] tracking-[-0.01em]">
+        <p className="projects__intro m-0 w-[48%] text-[clamp(20px,2.4vw,28px)] leading-[1.35] tracking-[-0.01em]">
           {intro}
         </p>
       </Container>

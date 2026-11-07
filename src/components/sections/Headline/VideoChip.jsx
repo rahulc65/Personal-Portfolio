@@ -22,16 +22,16 @@ export default function VideoChip({ mp4, webm, width = 1.5, height = 1, rotate =
     const card = cardRef.current;
     if (!card || prefersReducedMotion()) return undefined;
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       gsap.set(card, { scale: 0 });
       ScrollTrigger.create({
         trigger: card,
         start: 'top 88%',
         end: 'max', // still plays if the page was opened already scrolled past the card
         once: true,
-        onEnter: () => ctx.add(() => gsap.to(card, { scale: 1, duration: 1.5, ease: 'elastic.out(1, 0.55)', delay: 0.35 })),
+        onEnter: () => gctx.add(() => gsap.to(card, { scale: 1, duration: 1.5, ease: 'elastic.out(1, 0.55)', delay: 0.35 })),
       });
-    });
+    }, card);
     return () => ctx.revert();
   }, []);
 

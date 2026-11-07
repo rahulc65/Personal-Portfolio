@@ -79,7 +79,7 @@ export default function Marquee({ items = [] }) {
     const section = sectionRef.current;
     let onScrollEnd = null;
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       const skewEl = section.querySelector('.marquee__skew');
       const items = gsap.utils.toArray(section.querySelectorAll('.marquee__text, .marquee__icon'));
 
@@ -92,7 +92,7 @@ export default function Marquee({ items = [] }) {
         end: 'max', // still plays if the page was opened already scrolled past the band
         once: true,
         onEnter: () =>
-          ctx.add(() => {
+          gctx.add(() => {
             gsap.to(section, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.4, ease: 'expo.inOut', clearProps: 'clipPath' });
             gsap.to(items, { yPercent: 0, duration: 1.2, ease: 'expo.out', stagger: { each: 0.06 }, delay: 0.35 });
           }),

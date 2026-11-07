@@ -26,7 +26,7 @@ export default function Headline({ segments = [] }) {
     if (prefersReducedMotion()) return undefined;
     const splits = [];
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       const root = rootRef.current;
       const heading = root.querySelector('.headline__h');
       const texts = gsap.utils.toArray(root.querySelectorAll('.headline__text'));
@@ -62,7 +62,7 @@ export default function Headline({ segments = [] }) {
         start: 'top 80%',
         end: 'max', // still plays if the page was opened already scrolled past the sentence
         once: true,
-        onEnter: () => ctx.add(play),
+        onEnter: () => gctx.add(play),
       });
     }, rootRef);
 

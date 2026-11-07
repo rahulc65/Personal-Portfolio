@@ -51,7 +51,7 @@ export default function Footer({ content }) {
     if (prefersReducedMotion()) return undefined;
     const splits = [];
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       const root = rootRef.current;
       const eyebrowEl = root.querySelector('.footer__eyebrow');
       const emailEl = root.querySelector('.footer__email');
@@ -92,7 +92,7 @@ export default function Footer({ content }) {
         start: 'top 75%',
         end: 'max', // still plays if the page was opened already at the bottom
         once: true,
-        onEnter: () => ctx.add(play),
+        onEnter: () => gctx.add(play),
       });
     }, rootRef);
 

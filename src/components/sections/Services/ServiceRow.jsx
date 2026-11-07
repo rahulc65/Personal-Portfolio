@@ -28,7 +28,7 @@ export default function ServiceRow({ service, index, open, onToggle }) {
 
     let split = null;
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       const thumb = root.querySelector('.service__thumb');
       const img = root.querySelector('.service__thumb img');
       const heading = root.querySelector('.service__title');
@@ -74,7 +74,7 @@ export default function ServiceRow({ service, index, open, onToggle }) {
         gsap.delayedCall(changed ? 0.7 : 0, hide);
       } else if (changed) {
         hide();
-        gsap.delayedCall(0.25, () => ctx.add(show)); // let the panel start growing first
+        gsap.delayedCall(0.25, () => gctx.add(show)); // let the panel start growing first
       } else {
         // open on page load: wait until the row scrolls into view
         hide();
@@ -83,7 +83,7 @@ export default function ServiceRow({ service, index, open, onToggle }) {
           start: 'top 88%',
           end: 'max',
           once: true,
-          onEnter: () => ctx.add(show),
+          onEnter: () => gctx.add(show),
         });
       }
     }, rowRef);

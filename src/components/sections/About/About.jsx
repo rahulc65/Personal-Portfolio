@@ -70,7 +70,7 @@ export default function About({
     if (prefersReducedMotion()) return undefined;
     const splits = [];
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       const root = rootRef.current;
       const one = (sel) => root.querySelector(sel);
       const all = (sel) => gsap.utils.toArray(root.querySelectorAll(sel));
@@ -89,7 +89,7 @@ export default function About({
       // when(el, start, fn): run fn once, the first time `el` reaches `start` (also if the page opened further down)
       const when = (el, start, fn) =>
         el &&
-        ScrollTrigger.create({ trigger: el, start, end: 'max', once: true, onEnter: () => ctx.add(fn) });
+        ScrollTrigger.create({ trigger: el, start, end: 'max', once: true, onEnter: () => gctx.add(fn) });
 
       /* hidden start states */
       gsap.set(eyebrow, { autoAlpha: 0, y: 16 });

@@ -41,7 +41,7 @@ export default function Skills({ intro, groups = [], gravityItems = [] }) {
     if (prefersReducedMotion()) return undefined;
     const splits = [];
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       const root = rootRef.current;
 
       // background: settles from a zoom as the section travels through the viewport
@@ -138,7 +138,7 @@ export default function Skills({ intro, groups = [], gravityItems = [] }) {
         start: 'top 70%',
         end: 'max', // still plays if the page was opened already scrolled past this section
         once: true,
-        onEnter: () => ctx.add(play),
+        onEnter: () => gctx.add(play),
       });
     }, rootRef);
 

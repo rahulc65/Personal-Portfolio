@@ -21,6 +21,7 @@ import { headlineSegments } from './data/headline';
 import { contactConfig, serviceOptions, contactWord } from './data/contact';
 import { footerContent } from './data/footer';
 import useLenis from './hooks/useLenis';
+import UnderConstruction from './components/sections/UnderConstruction/UnderConstruction';
 
 import heroImage from './assets/images/profile-img.png';
 
@@ -72,7 +73,7 @@ const sections = [
   },
 ];
 
-export default function App() {
+function HomePage() {
   useLenis();
 
   return (
@@ -88,4 +89,15 @@ export default function App() {
       <Footer content={footerContent} />
     </>
   );
+}
+
+/* Only the one-page home site exists so far. Any other path (/projects, /about, ...) is an inner page that
+   hasn't been built yet, so it gets the "under construction" page. When a real inner page is ready, add it here. */
+const isHomePath = () => {
+  const path = window.location.pathname.replace(/\/+$/, '');
+  return path === '' || path === '/index.html';
+};
+
+export default function App() {
+  return isHomePath() ? <HomePage /> : <UnderConstruction />;
 }

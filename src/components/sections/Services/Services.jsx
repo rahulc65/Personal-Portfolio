@@ -30,7 +30,7 @@ export default function Services({ intro, services = [] }) {
     if (prefersReducedMotion()) return undefined;
     const splits = [];
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       const root = rootRef.current;
       const eyebrow = root.querySelector('.services__eyebrow');
       const title = root.querySelector('.services__title');
@@ -59,7 +59,7 @@ export default function Services({ intro, services = [] }) {
         end: 'max', // still plays if the page was opened already scrolled past this section
         once: true,
         onEnter: () =>
-          ctx.add(() => {
+          gctx.add(() => {
             const titleSplit = SplitText.create(title, { type: 'lines,chars', mask: 'lines' });
             const introSplit = SplitText.create(intro, { type: 'lines', mask: 'lines' });
             splits.push(titleSplit, introSplit);
@@ -82,7 +82,7 @@ export default function Services({ intro, services = [] }) {
         end: 'max',
         once: true,
         onEnter: () =>
-          ctx.add(() => {
+          gctx.add(() => {
             // the divider lines draw from left to right, each row's content rises just behind its line
             gsap.to(lines, { scaleX: 1, duration: 1.6, ease: 'expo.inOut', stagger: 0.16 });
             gsap.to(rows, { autoAlpha: 1, y: 0, duration: 1.2, ease: 'expo.out', stagger: 0.16, delay: 0.25 });

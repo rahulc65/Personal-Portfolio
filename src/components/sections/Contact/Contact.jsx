@@ -46,7 +46,7 @@ export default function Contact({ word, serviceOptions = [], config }) {
     // every direct child of the <form> except the hidden honeypot field
     const fields = gsap.utils.toArray(form.querySelectorAll('form > *:not([aria-hidden="true"])'));
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       gsap.set(panel, { clipPath: 'inset(0% 0% 100% 0%)' });
       gsap.set(fields, { autoAlpha: 0, y: 34 });
 
@@ -56,7 +56,7 @@ export default function Contact({ word, serviceOptions = [], config }) {
         end: 'max', // still plays if the page was opened already scrolled past this section
         once: true,
         onEnter: () =>
-          ctx.add(() =>
+          gctx.add(() =>
             gsap.to(panel, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.3, ease: 'expo.out', clearProps: 'clipPath' })
           ),
       });
@@ -67,7 +67,7 @@ export default function Contact({ word, serviceOptions = [], config }) {
         end: 'max',
         once: true,
         onEnter: () =>
-          ctx.add(() =>
+          gctx.add(() =>
             gsap.to(fields, { autoAlpha: 1, y: 0, duration: 1.1, ease: 'expo.out', stagger: 0.12, clearProps: 'transform' })
           ),
       });

@@ -33,7 +33,7 @@ export default function Hero({
     let split = null;
     let revealed = false;
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       const header = document.getElementById('site-header');
 
       /* ---------- bio: split into lines, each in its own mask ---------- */
@@ -70,7 +70,7 @@ export default function Hero({
         .call(
           () => {
             revealed = true;
-            ctx.add(() => gsap.to(split.lines, { yPercent: 0, duration: 1.3, stagger: 0.09, ease: 'expo.out' }));
+            gctx.add(() => gsap.to(split.lines, { yPercent: 0, duration: 1.3, stagger: 0.09, ease: 'expo.out' }));
           },
           null,
           0.65

@@ -34,7 +34,7 @@ export default function Process({ statement = [], steps = [], image = glassImage
     if (prefersReducedMotion()) return undefined;
     let split = null;
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((gctx) => {
       const root = rootRef.current;
       const statement = root.querySelector('.process__statement');
       const rows = gsap.utils.toArray(root.querySelectorAll('.process__row'));
@@ -67,7 +67,7 @@ export default function Process({ statement = [], steps = [], image = glassImage
         end: 'max',
         once: true,
         onEnter: () =>
-          ctx.add(() => {
+          gctx.add(() => {
             gsap.to(eyebrow, { autoAlpha: 1, y: 0, duration: 1, ease: 'expo.out' });
             gsap.to(rows, { autoAlpha: 1, y: 0, duration: 1.1, ease: 'expo.out', stagger: 0.12, delay: 0.1 });
           }),
@@ -82,7 +82,7 @@ export default function Process({ statement = [], steps = [], image = glassImage
           end: 'max',
           once: true,
           onEnter: () =>
-            ctx.add(() =>
+            gctx.add(() =>
               gsap.to(media, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.5, ease: 'expo.inOut', clearProps: 'clipPath' })
             ),
         });
